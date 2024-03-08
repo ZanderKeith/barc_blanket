@@ -21,7 +21,7 @@ DEFAULT_PARAMETERS = {
     # Settings
     'run_mode': 'fixed source',  # 'fixed source' or 'eigenvalue'
     'batches': 100,
-    'inactive_batches': 20,       # Only used in eigenvalue mode
+    'inactive_batches': 20,      # Only used in eigenvalue mode
     'particles': 1e6             # "Don't go under 1 million particles unless you're debugging" - Ethan
 }
 

@@ -1,29 +1,71 @@
 import openmc
+import optuna
 
+from barc_blanket.models.simple_geometry import make_model
 
-def evaluate_metric(model:openmc.Model, metric):
-    """ Evaluate the metric for the given model
+def evaluate_metric(trial, sweep_config):
+    """ Objective function for the optimization
 
     Parameters:
     ----------
-    model : openmc.Model
-        The model to evaluate the metric for
-    metric : str
-        The name of the metric to evaluate
+    trial : optuna.Trial
+        An optuna trial object
+    sweep_config : dict
+        A dictionary containing the sweep configuration
 
     Returns:
     -------
     metric_val: float
-        The value of the metric calculated for the model
+        The value of the metric calculated for the parameters in this trial
     """
 
-    if metric == "tbr":
-        metric_val = tritium_breeding_ratio(model)
-    #elif metric == "some_other_arbitrary_metric":
-    #    metric_val = whatever_function(model)
-    else:
-        raise ValueError(f"Invalid metric: {metric}")
+    # Obtain the values of parameters from the trial
+    model_config = {}
+    parameters = sweep_config['parameters']
+    parameter_names = list(parameters.keys())
 
+    for parameter_name in parameter_names:
+        parameter = parameters[parameter_name]
+        distribution_type = parameter['distribution']
+
+        if distribution_type == "int":
+            min = parameter['min']
+            max = parameter['max']
+            chosen_value = trial.suggest_int(parameter_name, min, max)
+        elif distribution_type == "float":
+            min = parameter['min']
+            max = parameter['max']
+            log = parameter['log']
+            chosen_value = trial.suggest_float(parameter_name, min, max, log=log)
+        elif distribution_type == "categorical":
+            values = parameter['values']
+            chosen_value = trial.suggest_categorical(parameter_name, values)
+        else:
+            raise ValueError(f"Invalid distribution type: {distribution_type}")
+        
+        model_config[parameter_name] = chosen_value
+
+    # Create the model and evaluate the metric
+    try:
+        model = make_model(model_config)
+        metric = sweep_config['metric']
+        if metric == "tbr":
+            metric_val = tritium_breeding_ratio(model)
+        #elif metric == "some_other_arbitrary_metric":
+        #    metric_val = whatever_function(model)
+        else:
+            raise ValueError(f"Invalid metric: {metric}")
+    except MemoryError as e:
+        print(f"Ran out of memory for trial {trial.number}")
+        print(e)
+        metric_val = float('nan')
+    except Exception as e:
+        print(f"Error in trial {trial.number}, pruning...")
+        print(e)
+        # If anything oges wrong during training or validation, say that the trial was pruned
+        # This should make Optuna try a different set of parameters to avoid errors
+        raise optuna.TrialPruned()
+    
     return metric_val
 
 # THIS IS JUST A PROOF OF CONCEPT
@@ -46,6 +88,7 @@ def tritium_breeding_ratio(model:openmc.Model):
     """
 
     # Run the model
+    # TODO: stop hardcoding statepoint
     model.run()
     final_statepoint = openmc.StatePoint("statepoint.50.h5")
 
