@@ -78,6 +78,9 @@ def main():
             storage=storage, 
             study_name=f"{sweep_directory}",
             load_if_exists=True,
+            # These directions don't actually do anything since the entire grid is being searched,
+            # but they are required to be specified so all the metrics are reported
+            directions=["maximize"],
             sampler=optuna.samplers.GridSampler(grid)
         )
 

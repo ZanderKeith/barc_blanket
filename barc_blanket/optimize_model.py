@@ -48,29 +48,40 @@ def evaluate_metric(trial, sweep_config):
     # Create the model and evaluate the metric
     try:
         model = make_model(model_config)
+        model.run()
+
+        # Calculate all metrics and save them as user attributes
+        # This allows us to see the values of metrics other than the one being optimized for
+        tbr = tritium_breeding_ratio(model_config)
+        k_eff = k_effective(model_config)
+
+        trial.set_user_attr("tbr", tbr)
+        trial.set_user_attr("k_eff", k_eff)
+
         metric = sweep_config['metric']
         if metric == "tbr":
-            metric_val = tritium_breeding_ratio(model, model_config)
-        #elif metric == "some_other_arbitrary_metric":
-        #    metric_val = whatever_function(model)
+            metric_val = tbr
+        elif metric == "k_eff":
+            metric_val = k_eff
         else:
             raise ValueError(f"Invalid metric: {metric}")
     except MemoryError as e:
         print(f"Ran out of memory for trial {trial.number}")
         print(e)
-        metric_val = float('nan')
+        return float('nan')
     except Exception as e:
         print(f"Error in trial {trial.number}, pruning...")
         print(e)
         # If anything oges wrong during training or validation, say that the trial was pruned
         # This should make Optuna try a different set of parameters to avoid errors
         raise optuna.TrialPruned()
-    
+
     return metric_val
+
 
 # THIS IS JUST A PROOF OF CONCEPT
 # THIS FUNCTION DOES NOT PRODUCE CORRECT OUTPUT
-def tritium_breeding_ratio(model:openmc.Model, model_config:dict):
+def tritium_breeding_ratio(model_config:dict):
     """ THIS IS JUST A PROOF OF CONCEPT
     THIS FUNCTION DOES NOT PRODUCE CORRECT OUTPUT
     
@@ -78,9 +89,6 @@ def tritium_breeding_ratio(model:openmc.Model, model_config:dict):
 
     Parameters:
     ----------
-    model : openmc.Model
-        The model to evaluate the metric for
-
     model_config : dict
         A dictionary containing the model configuration
 
@@ -89,10 +97,6 @@ def tritium_breeding_ratio(model:openmc.Model, model_config:dict):
     tbr: float
         The tritium breeding ratio for the model
     """
-
-    # Run the model
-    # TODO: stop hardcoding statepoint
-    model.run()
     # Get the last statepoint number from batches
     statepoint_number = model_config['batches']
     final_statepoint = openmc.StatePoint(f"statepoint.{statepoint_number}.h5")
@@ -105,3 +109,24 @@ def tritium_breeding_ratio(model:openmc.Model, model_config:dict):
     
     # TODO do some volume weighting or whatever to get an actual TBR
     return tally_result
+
+def k_effective(model_config:dict):
+    """ Calculate the k-effective for the given model
+
+    Parameters:
+    ----------
+    model_config : dict
+        A dictionary containing the model configuration
+
+    Returns:
+    -------
+    k_eff: float
+        The k-effective for the model
+    """
+    # Get the last statepoint number from batches
+    statepoint_number = model_config['batches']
+    final_statepoint = openmc.StatePoint(f"statepoint.{statepoint_number}.h5")
+
+    # Get k-effective
+    k_eff = final_statepoint.keff.nominal_value
+    return k_eff

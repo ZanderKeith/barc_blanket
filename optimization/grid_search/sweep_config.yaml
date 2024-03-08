@@ -7,22 +7,20 @@ parameters:
   batches:
     distribution: categorical
     values:
-    #- 20
-    - 100
+    - 40
   inactive_batches:
     distribution: categorical
     values:
-    #- 5
-    - 20
+    - 5
   particles:
     distribution: categorical
     values:
-    - 1000000
+    - 10000
   li6_enrichment:
     distribution: float
-    max: 1.0
+    max: 0.6
     min: 0.0
-    step: 0.2
+    step: 0.3
     log: false
   fissile_enrichment:
     distribution: float
