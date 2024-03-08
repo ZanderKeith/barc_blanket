@@ -5,6 +5,7 @@ A sweep is defined in a 'sweep_config.yaml' file with the following structure:
     metric: metric name
     direction: minimize or maximize
     parameters:
+        # https://optuna.readthedocs.io/en/stable/tutorial/10_key_features/002_configurations.html
         parameter1:
         distribution: int
         max: 100
