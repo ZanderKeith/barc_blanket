@@ -50,7 +50,7 @@ def evaluate_metric(trial, sweep_config):
         model = make_model(model_config)
         metric = sweep_config['metric']
         if metric == "tbr":
-            metric_val = tritium_breeding_ratio(model)
+            metric_val = tritium_breeding_ratio(model, model_config)
         #elif metric == "some_other_arbitrary_metric":
         #    metric_val = whatever_function(model)
         else:
@@ -70,7 +70,7 @@ def evaluate_metric(trial, sweep_config):
 
 # THIS IS JUST A PROOF OF CONCEPT
 # THIS FUNCTION DOES NOT PRODUCE CORRECT OUTPUT
-def tritium_breeding_ratio(model:openmc.Model):
+def tritium_breeding_ratio(model:openmc.Model, model_config:dict):
     """ THIS IS JUST A PROOF OF CONCEPT
     THIS FUNCTION DOES NOT PRODUCE CORRECT OUTPUT
     
@@ -81,6 +81,9 @@ def tritium_breeding_ratio(model:openmc.Model):
     model : openmc.Model
         The model to evaluate the metric for
 
+    model_config : dict
+        A dictionary containing the model configuration
+
     Returns:
     -------
     tbr: float
@@ -90,7 +93,9 @@ def tritium_breeding_ratio(model:openmc.Model):
     # Run the model
     # TODO: stop hardcoding statepoint
     model.run()
-    final_statepoint = openmc.StatePoint("statepoint.50.h5")
+    # Get the last statepoint number from batches
+    statepoint_number = model_config['batches']
+    final_statepoint = openmc.StatePoint(f"statepoint.{statepoint_number}.h5")
 
     # Get tally results
     # TODO: do this programmatically instead of hardcoded here

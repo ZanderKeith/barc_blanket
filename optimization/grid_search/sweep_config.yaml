@@ -1,0 +1,32 @@
+metric: tbr
+parameters:
+  run_mode:
+    distribution: categorical
+    values:
+    - 'eigenvalue'
+  batches:
+    distribution: categorical
+    values:
+    #- 20
+    - 100
+  inactive_batches:
+    distribution: categorical
+    values:
+    #- 5
+    - 20
+  particles:
+    distribution: categorical
+    values:
+    - 1000000
+  li6_enrichment:
+    distribution: float
+    max: 1.0
+    min: 0.0
+    step: 0.2
+    log: false
+  fissile_enrichment:
+    distribution: float
+    max: 0.2
+    min: 0.0
+    step: 0.05
+    log: false
