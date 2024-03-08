@@ -14,8 +14,9 @@ DEFAULT_PARAMETERS = {
     'vv_thickness': 2,           # How thick the wall of the vacuum vessel is
     'fusion_blanket_width': 15,  # Width of the material in the fusion blanket
     'burner_blanket_width': 100, # Width of the material in the burner blanket
-    'li6_enrichment': 0.076,     # atom% enrichment of Li6 in the FLiBe
-    'slurry_ratio': 0.01,        # wt% slurry in the burner blanket
+    'li6_enrichment': 0.076,     # atom% (molar) enrichment of Li6 in the FLiBe
+    'slurry_ratio': 0.0,         # atom% (molar) slurry in the burner blanket
+    'fissile_enrichment': 0.0,   # atom% (molar) additional U235 in the burner blanket
 
     # Settings
     'run_mode': 'fixed source',  # 'fixed source' or 'eigenvalue'
@@ -67,7 +68,25 @@ def make_model(new_model_config=None):
     flibe.add_element("F", 4.0, "ao")
     flibe.set_density("g/cm3", 1.94)
 
-    #TODO: add tank contents
+    #TODO: add actual slurry contents
+    # RIGHT NOW THIS IS INCORRECT
+    slurry = openmc.Material(name="slurry")
+    slurry.add_nuclide('H1', 2.0, 'ao')
+    slurry.add_nuclide('O16', 1.0, 'ao')
+    slurry.set_density('g/cm3', 1.0)
+    
+    #UF4 Uranium Tetrafuoride
+    uf4 = openmc.Material(name='uf4')
+    uf4.add_nuclide('U235',1.0)
+    uf4.add_element('F',4.0)
+    uf4.set_density('g/cm3',6.7)
+
+    flibe_ratio = 1.0 - (model_config['slurry_ratio'] + model_config['fissile_enrichment'])
+    burner_blanket_contents = openmc.Material.mix_materials([flibe, slurry, uf4], 
+                                                            [flibe_ratio, 
+                                                            model_config['slurry_ratio'], 
+                                                            model_config['fissile_enrichment']],
+                                                            'ao')
 
     # Inconel 718 -
     inconel718 = openmc.Material(name='inconel718')
@@ -165,11 +184,10 @@ def make_model(new_model_config=None):
         fill=v4cr4ti
     )
 
-    # TODO: include slurry mixture
     burner_blanket_cell = openmc.Cell(
         name='burner_blanket_cell',
         region=+outboard_vv_outer_surface & -burner_blanket_tank_surface,
-        fill=flibe
+        fill=burner_blanket_contents
     )
 
     bounding_sphere_cell = openmc.Cell(
