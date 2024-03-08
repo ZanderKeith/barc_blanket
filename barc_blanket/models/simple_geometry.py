@@ -7,6 +7,7 @@ import numpy as np
 # Must determine if this is a reasonable assumption
 
 DEFAULT_PARAMETERS = {
+    # Geometry
     'major_radius': 680,         # All dimensions are in cm
     'plasma_minor_radius': 120,
     'sol_width': 5,
@@ -14,7 +15,13 @@ DEFAULT_PARAMETERS = {
     'fusion_blanket_width': 15,  # Width of the material in the fusion blanket
     'burner_blanket_width': 100, # Width of the material in the burner blanket
     'li6_enrichment': 0.076,     # atom% enrichment of Li6 in the FLiBe
-    'slurry_ratio': 0.01         # wt% slurry in the burner blanket
+    'slurry_ratio': 0.01,        # wt% slurry in the burner blanket
+
+    # Settings
+    'run_mode': 'fixed source',  # 'fixed source' or 'eigenvalue'
+    'batches': 100,
+    'inactive_batches': 20,       # Only used in eigenvalue mode
+    'particles': 1e6             # "Don't go under 1 million particles unless you're debugging" - Ethan
 }
 
 def make_model(new_model_config=None):
@@ -195,14 +202,18 @@ def make_model(new_model_config=None):
     source.angle = openmc.stats.Isotropic()
     source.energy = openmc.stats.muir(e0=14.08e6, m_rat=5, kt=20000)
 
-    settings = openmc.Settings(run_mode='fixed source')
+    settings = openmc.Settings(run_mode=model_config['run_mode'])
+    if model_config['run_mode'] == 'eigenvalue':
+        settings.inactive = model_config['inactive_batches']
     settings.photon_transport = False
     settings.source = source
-    settings.batches = 50
-    settings.particles = int(1e5) # modify this to shorten simulation, default was 1e6 
-    settings.statepoint = {'batches': [
-        5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100]}
+    settings.batches = model_config['batches']
+    settings.particles = int(model_config['particles'])
     settings.output = {'tallies': True}
+    # Make statepoints every 10 batches, ensuring the final batch is always included
+    statepoint_set = set([i for i in range(10, model_config['batches']+1, 10)])
+    statepoint_set.add(model_config['batches'])
+    settings.statepoint = {'batches': list(statepoint_set)}
 
     #####################
     ## Define Tallies  ##
