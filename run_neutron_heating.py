@@ -58,7 +58,7 @@ with working_directory("neutron_heating_photon_transport"):
         'midplane_split': True
     })
 
-    rerun_model = True
+    rerun_model = False
     if rerun_model is True:
         model.run()
 

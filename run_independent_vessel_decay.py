@@ -119,22 +119,26 @@ with working_directory("independent_vessel_decay"):
     plt.grid(True, color='w', linestyle='-', linewidth=1.5)
     plt.gca().patch.set_facecolor('0.92')
 
-    plt.plot(heat_times_days[1:], first_wall_decay_heat_total_MW[1:], label="First Wall", linewidth=4)
-    plt.plot(heat_times_days[1:], cooling_vessel_decay_heat_total_MW[1:], label="Cooling Vessel", linewidth=4)
-    plt.plot(heat_times_days[1:], vacuum_vessel_decay_heat_total_MW[1:], label="Vacuum Vessel", linewidth=4)
+    OFFSET = 1
+    plt.plot(heat_times_days[OFFSET:], first_wall_decay_heat_total_MW[OFFSET:], label="First Wall", linewidth=4)
+    #plt.plot(heat_times_days[OFFSET:], cooling_vessel_decay_heat_total_MW[OFFSET:], label="Cooling Vessel", linewidth=4)
+    plt.plot(heat_times_days[OFFSET:], vacuum_vessel_decay_heat_total_MW[OFFSET:], label="Vacuum Vessel", linewidth=4)
     #plt.plot(heat_times_days[1:], blanket_vessel_decay_heat_total_MW[1:], label="Blanket Vessel", width=2)
-    plt.xlim(0, max(heat_times_days))
+    #plt.xlim(0, max(heat_times_days))
     plt.legend(loc='upper right')
-    plt.xlabel("Time [days]", fontsize=24)
-    plt.ylabel("Decay Heat [MW]", fontsize=24)
-    plt.title("Decay Heating in Replaceable Components", fontsize=26)
-    plt.ylim(0, 3)
+    plt.xlabel("Time [days]", fontsize=26)
+    plt.ylabel("Decay Heat [MW]", fontsize=26)
+    plt.title("Decay Heating in Replaceable Components", fontsize=28)
+    plt.ylim(0, 7.1)
     # Make x ticks bigger
-    plt.xticks(fontsize=20)
+    plt.xticks(fontsize=24)
     # Make y ticks bigger
-    plt.yticks(fontsize=20)
+    plt.yticks(fontsize=24)
     # Make plot layout tight
     plt.tight_layout()
+
+    # Make x axis log scale
+    plt.xscale('log')
 
     plt.savefig("vessel_decay_heat.png")
 
