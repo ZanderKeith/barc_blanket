@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import openmc.deplete
 from barc_blanket.materials.waste_classification import sum_of_fractions, remove_flibe, remove_tritium
 from barc_blanket.models.barc_model_final import SECTION_CORRECTION
+from barc_blanket.models.materials import MA_LLNP
 
 def gw_to_neutron_rate(gw, section_correction=SECTION_CORRECTION):
     """Convert GW of fusion power to neutron rate in n/s
@@ -49,6 +50,35 @@ def run_coupled_depletion(model, timesteps_years, fusion_power):
     
     openmc.deplete.CECMIntegrator(op, timesteps_days, source_rates=source_rates, timestep_units='d').integrate()
 
+def not_flibe_depletion_kg(material1, material2):
+    """Determine the mass of all nuclides depleted from a material except for FLiBe
+    
+    Parameters
+    ----------
+    material1 : openmc.Material
+        Initial material
+    material2 : openmc.Material
+        Final material
+    
+    Returns
+    -------
+    actual_mass_kg : float
+        Mass of all nuclides except for FLiBe [kg]
+    """
+
+    simulated_mass_g = 0
+
+    for nuclide in material1.get_nuclides():
+        # Only care about nuclides in the table
+        if nuclide in MA_LLNP:
+            simulated_mass_g += (material1.get_mass(nuclide) - material2.get_mass(nuclide))
+
+    actual_mass_g = simulated_mass_g / SECTION_CORRECTION
+    actual_mass_kg = actual_mass_g / 1000
+
+    return actual_mass_kg
+
+
 def postprocess_coupled_depletion(flibe_material_index, remove_C14=False):
     """Postprocess the results of a coupled depletion run
     
@@ -69,6 +99,9 @@ def postprocess_coupled_depletion(flibe_material_index, remove_C14=False):
         materials = results.export_to_materials(burnup_index=i, path='materials.xml')
         blanket_composition_at_time.append(materials[flibe_material_index])
 
+    for i in range(len(blanket_composition_at_time) - 1):
+        print(f"Mass of nuclides depleted from blanket at {times_years[i]} years: {not_flibe_depletion_kg(blanket_composition_at_time[i], blanket_composition_at_time[i+1])} kg")
+
     blanket_result_dictionary = {}
     for blanket_material, time in zip(blanket_composition_at_time, times_years):
 
@@ -80,9 +113,9 @@ def postprocess_coupled_depletion(flibe_material_index, remove_C14=False):
         table_1_sum_of_fractions, table_1_culprits = sum_of_fractions(sample_material, 1, None, remove_C14=remove_C14)
         table_2_sum_of_fractions, table_2_culprits = sum_of_fractions(sample_material, 2, 3)
 
-        print(f"Time: {time} years")
-        print(f"Table 1 sum of fractions: {table_1_sum_of_fractions:0.2f}")
-        print(f"Table 2 sum of fractions: {table_2_sum_of_fractions:0.2f}")
+        #print(f"Time: {time} years")
+        #print(f"Table 1 sum of fractions: {table_1_sum_of_fractions:0.2f}")
+        #print(f"Table 2 sum of fractions: {table_2_sum_of_fractions:0.2f}")
 
         blanket_result_dictionary[time] = {'table_1_sum_of_fractions': table_1_sum_of_fractions,
                                     'table_1_culprits': table_1_culprits,

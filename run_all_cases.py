@@ -3,39 +3,56 @@
 import os
 
 from barc_blanket.utilities import working_directory
-from barc_blanket.models.barc_model_final import make_model, mo
+from barc_blanket.models.barc_model_final import make_model
 from barc_blanket.materials.blanket_depletion import run_coupled_depletion
-from barc_blanket.models.materials import flibe, lid, pbli, burner_mixture
+from barc_blanket.models.materials import flibe, lid, pbli, burner_mixture, pure_ma_llnp
 
+# Original 22.63 class
+# CASES = {
+#     'pure_flibe': {'blanket_material': flibe(),
+#                    'name': "Pure FLiBe"},
+#     'pure_lid': {'blanket_material': lid(),
+#                  "name": "Pure LiD"},
+#     'pure_pbli': {'blanket_material': pbli(),
+#                   "name": "Pure PbLi"},
+#     'waste_01_flibe': {'blanket_material': burner_mixture(0.01, flibe=flibe()),
+#                        "name": "FLiBe 1% Full Tank Inventory"},
+#     'waste_01_lid': {'blanket_material': burner_mixture(0.01, flibe=lid()),
+#                      "name": "LiD 1% Full Tank Inventory"},
+#     'waste_01_pbli': {'blanket_material': burner_mixture(0.01, flibe=pbli()),
+#                       "name": "PbLi 1% Full Tank Inventory"},
+#     'waste_05_flibe': {'blanket_material': burner_mixture(0.05, flibe=flibe()),
+#                        "name": "FLiBe 5% Full Tank Inventory"},
+#     'waste_05_lid': {'blanket_material': burner_mixture(0.05, flibe=lid()),
+#                      "name": "LiD 5% Full Tank Inventory"},
+#     'waste_05_pbli': {'blanket_material': burner_mixture(0.05, flibe=pbli()),
+#                       "name": "PbLi 5% Full Tank Inventory"},
+#     'waste_10_flibe': {'blanket_material': burner_mixture(0.10, flibe=flibe()),
+#                        "name": "FLiBe 10% Full Tank Inventory"},
+#     'waste_10_lid': {'blanket_material': burner_mixture(0.10, flibe=lid()),
+#                      "name": "LiD 10% Full Tank Inventory"},
+#     'waste_10_pbli': {'blanket_material': burner_mixture(0.10, flibe=pbli()),
+#                       "name": "PbLi 10% Full Tank Inventory"},
+# }
+
+# ARPA-E proposal
 CASES = {
-    'pure_flibe': {'blanket_material': flibe(),
-                   'name': "Pure FLiBe"},
-    'pure_lid': {'blanket_material': lid(),
-                 "name": "Pure LiD"},
-    'pure_pbli': {'blanket_material': pbli(),
-                  "name": "Pure PbLi"},
-    'waste_01_flibe': {'blanket_material': burner_mixture(0.01, flibe=flibe()),
-                       "name": "FLiBe 1% Full Tank Inventory"},
-    'waste_01_lid': {'blanket_material': burner_mixture(0.01, flibe=lid()),
-                     "name": "LiD 1% Full Tank Inventory"},
-    'waste_01_pbli': {'blanket_material': burner_mixture(0.01, flibe=pbli()),
-                      "name": "PbLi 1% Full Tank Inventory"},
-    'waste_05_flibe': {'blanket_material': burner_mixture(0.05, flibe=flibe()),
-                       "name": "FLiBe 5% Full Tank Inventory"},
-    'waste_05_lid': {'blanket_material': burner_mixture(0.05, flibe=lid()),
-                     "name": "LiD 5% Full Tank Inventory"},
-    'waste_05_pbli': {'blanket_material': burner_mixture(0.05, flibe=pbli()),
-                      "name": "PbLi 5% Full Tank Inventory"},
-    'waste_10_flibe': {'blanket_material': burner_mixture(0.10, flibe=flibe()),
-                       "name": "FLiBe 10% Full Tank Inventory"},
-    'waste_10_lid': {'blanket_material': burner_mixture(0.10, flibe=lid()),
-                     "name": "LiD 10% Full Tank Inventory"},
-    'waste_10_pbli': {'blanket_material': burner_mixture(0.10, flibe=pbli()),
-                      "name": "PbLi 10% Full Tank Inventory"},
+    "pure_ma_llnp_05_flibe": {"blanket_material": burner_mixture(0.05, tank_contents=pure_ma_llnp(), flibe=flibe()),
+                                "name": "MA LLNP 5% FLiBe"},
+    "pure_ma_llnp_10_flibe": {"blanket_material": burner_mixture(0.10, tank_contents=pure_ma_llnp(), flibe=flibe()),
+                                "name": "MA LLNP 10% FLiBe"},
+    "pure_ma_llnp_20_flibe": {"blanket_material": burner_mixture(0.20, tank_contents=pure_ma_llnp(), flibe=flibe()),
+                                "name": "MA LLNP 20% FLiBe"},
+    "pure_ma_llnp_05_pbli": {"blanket_material": burner_mixture(0.05, tank_contents=pure_ma_llnp(), flibe=pbli()),
+                                "name": "MA LLNP 5% PbLi"},
+    "pure_ma_llnp_10_pbli": {"blanket_material": burner_mixture(0.10, tank_contents=pure_ma_llnp(), flibe=pbli()),
+                                "name": "MA LLNP 10% PbLi"},
+    "pure_ma_llnp_20_pbli": {"blanket_material": burner_mixture(0.20, tank_contents=pure_ma_llnp(), flibe=pbli()),
+                                "name": "MA LLNP 20% PbLi"},
 }
 
-BATCHES = 20
-PARTICLES = 1e3
+BATCHES = 30
+PARTICLES = int(1e3)
 PHOTON_TRANSPORT = False
 
 def main():
@@ -52,7 +69,7 @@ def main():
             model.export_to_model_xml()
 
             fusion_power = 2.2  # GW
-            timesteps_years = [10] * 10 # 10 year timesteps for 100 years
+            timesteps_years = [1] * 5 # 1 year timesteps for 5 years
 
             run_coupled_depletion(model, timesteps_years, fusion_power)
 

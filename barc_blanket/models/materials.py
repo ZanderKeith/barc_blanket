@@ -11,7 +11,6 @@ def dt_plasma():
     return dt_plasma
 
 # FLIBE
-
 def flibe(li6_enrichment=None):
     flibe = openmc.Material(name="flibe")
     flibe.depletable=True
@@ -122,6 +121,40 @@ def tank_contents(mixture_name:str):
 
     return tank_contents
 
+MA_LLNP = ["Np237", "Am241", "Am243", "Cm242", "Cm244", "Tc99", "I129", "Cs135", "Zr93"]
+
+def pure_ma_llnp():
+    """PWR spent fuel, minus the uranium
+    https://radioactivity.eu.com/articles/radioactive_waste/spent_fuel_composition
+    """
+
+    kg_per_tonne = {
+        #"Pu238": 0.18,
+        #"Pu239": 5.67,
+        #"Pu240": 2.21,
+        #"Pu241": 1.19,
+        #"Pu242": 0.49,
+        "Np237": 0.43,
+        "Am241": 0.22,
+        "Am243": 0.10,
+        "Cm242": 0.000013,
+        "Cm244": 0.024,
+        "Tc99": 0.81,
+        "I129": 0.17,
+        "Cs135": 1.31,
+        "Zr93": 0.71,
+    }
+
+    total_mass = sum(kg_per_tonne.values())
+    mass_fraction = {nuclide: kg_per_tonne[nuclide] / total_mass for nuclide in kg_per_tonne}
+
+    pure_ma_llnp = openmc.Material(name="pure_ma_llnp")
+    pure_ma_llnp.depletable = True
+    pure_ma_llnp.set_density("g/cm3", 10) # Just a guess
+    for nuclide, fraction in mass_fraction.items():
+        pure_ma_llnp.add_nuclide(nuclide, fraction, "wo")
+    return pure_ma_llnp
+
 # Mixture of tank contents and flibe for the blanket
 def burner_mixture(slurry_ratio, tank_contents=tank_contents("full_tank_inventory"), flibe=flibe()):
     """Create a mixture of flibe and tank contents for the blanket
@@ -129,7 +162,7 @@ def burner_mixture(slurry_ratio, tank_contents=tank_contents("full_tank_inventor
     Parameters:
     ----------
     slurry_ratio : float
-        The weight percent of slurry in the blanket
+        The volume percent of slurry in the blanket
     tank_contents : openmc.Material, optional
         The tank contents to use in the mixture. Default is natural uranium.
     flibe : openmc.Material, optional
@@ -142,12 +175,12 @@ def burner_mixture(slurry_ratio, tank_contents=tank_contents("full_tank_inventor
         The mixture of FLiBe and tank contents
     
     """
-    flibe_ao = 1 - slurry_ratio
+    flibe_vo = 1 - slurry_ratio
 
     burner_mixture = openmc.Material.mix_materials(
         [flibe, tank_contents],
-        [flibe_ao, slurry_ratio],
-        'wo',
+        [flibe_vo, slurry_ratio],
+        'vo',
         name="burner_mixture"
     )
     burner_mixture.depletable = True
