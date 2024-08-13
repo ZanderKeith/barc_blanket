@@ -7,7 +7,7 @@ from openmc.data import atomic_mass
 from barc_blanket.utilities import working_directory
 from barc_blanket.models.barc_model_final import make_model
 from barc_blanket.materials.blanket_depletion import run_coupled_depletion
-from barc_blanket.models.materials import flibe, lid, pbli, burner_mixture, pure_ma_llnp, lif_bef
+from barc_blanket.models.materials import flibe, lid, pbli, burner_mixture, pure_ma_llnp, lif_bef, burner_mixture_fixed_mass
 
 # Original 22.63 class
 # CASES = {
@@ -38,18 +38,24 @@ from barc_blanket.models.materials import flibe, lid, pbli, burner_mixture, pure
 # }
 
 # ARPA-E proposal
+pure_ma_llnp_05_flibe_burner_mixture = burner_mixture(0.05, tank_contents=pure_ma_llnp(), flibe=lif_bef(0.7, 0.2))
+pure_ma_llnp_10_flibe_burner_mixture = burner_mixture(0.10, tank_contents=pure_ma_llnp(), flibe=lif_bef(0.7, 0.2))
+pure_ma_llnp_20_flibe_burner_mixture = burner_mixture(0.20, tank_contents=pure_ma_llnp(), flibe=lif_bef(0.7, 0.2))
+pure_ma_llnp_05_pbli_burner_mixture = burner_mixture_fixed_mass(pure_ma_llnp(), pbli(), pure_ma_llnp_05_flibe_burner_mixture)
+pure_ma_llnp_10_pbli_burner_mixture = burner_mixture_fixed_mass(pure_ma_llnp(), pbli(), pure_ma_llnp_10_flibe_burner_mixture)
+pure_ma_llnp_20_pbli_burner_mixture = burner_mixture_fixed_mass(pure_ma_llnp(), pbli(), pure_ma_llnp_20_flibe_burner_mixture)
 CASES = {
-    "pure_ma_llnp_05_flibe": {"blanket_material": burner_mixture(0.05, tank_contents=pure_ma_llnp(), flibe=lif_bef(0.7, 0.2)),
+    "pure_ma_llnp_05_flibe": {"blanket_material": pure_ma_llnp_05_flibe_burner_mixture,
                                 "name": "MA LLNP 5% FLiBe"},
-    "pure_ma_llnp_10_flibe": {"blanket_material": burner_mixture(0.10, tank_contents=pure_ma_llnp(), flibe=lif_bef(0.7, 0.2)),
+    "pure_ma_llnp_10_flibe": {"blanket_material": pure_ma_llnp_10_flibe_burner_mixture,
                                 "name": "MA LLNP 10% FLiBe"},
-    "pure_ma_llnp_20_flibe": {"blanket_material": burner_mixture(0.20, tank_contents=pure_ma_llnp(), flibe=lif_bef(0.7, 0.2)),
+    "pure_ma_llnp_20_flibe": {"blanket_material": pure_ma_llnp_20_flibe_burner_mixture,
                                 "name": "MA LLNP 20% FLiBe"},
-    "pure_ma_llnp_05_pbli": {"blanket_material": burner_mixture(0.05, tank_contents=pure_ma_llnp(), flibe=pbli()),
+    "pure_ma_llnp_05_pbli": {"blanket_material": pure_ma_llnp_05_pbli_burner_mixture,
                                 "name": "MA LLNP 5% PbLi"},
-    "pure_ma_llnp_10_pbli": {"blanket_material": burner_mixture(0.10, tank_contents=pure_ma_llnp(), flibe=pbli()),
+    "pure_ma_llnp_10_pbli": {"blanket_material": pure_ma_llnp_10_pbli_burner_mixture,
                                 "name": "MA LLNP 10% PbLi"},
-    "pure_ma_llnp_20_pbli": {"blanket_material": burner_mixture(0.20, tank_contents=pure_ma_llnp(), flibe=pbli()),
+    "pure_ma_llnp_20_pbli": {"blanket_material": pure_ma_llnp_20_pbli_burner_mixture,
                                 "name": "MA LLNP 20% PbLi"},
 }
 

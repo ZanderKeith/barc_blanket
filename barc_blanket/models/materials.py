@@ -207,3 +207,46 @@ def burner_mixture(slurry_ratio, percent_type='ao', tank_contents=tank_contents(
     burner_mixture.depletable = True
 
     return burner_mixture
+
+def burner_mixture_fixed_mass(waste_material, breeder_material, reference_material):
+    """Create a mixture where the mass of waste material is the same as in the reference material
+    
+    Parameters:
+    ----------
+    waste_material : openmc.Material
+        The waste material of fission products and other stuff.
+    breeder_material : openmc.Material
+        FLiBe, PbLi, etc.
+    reference_material : openmc.Material
+        The material to match the mass of. Assumed to be a mixture of waste_material and some other breeder_material
+    """
+
+    # We are maintaining the mass density of the waste material,
+    # and diluting the breeder material according to the volume displaced by the waste material
+    
+    diluted_waste_mass_density = 0
+    for nuclide in waste_material.get_nuclides():
+        diluted_waste_mass_density += reference_material.get_mass_density(nuclide)
+
+    tank_volume = 1 # Don't actually know this, just putting it down to make this logic clearer
+    waste_mass = diluted_waste_mass_density * tank_volume
+    waste_volume = waste_mass / waste_material.density
+
+    breeder_volume = tank_volume - waste_volume
+
+    waste_volume_percent = waste_volume / tank_volume
+    breeder_volume_percent = breeder_volume / tank_volume
+
+    # Put the mixture together in terms of volume fractions
+    mixture = openmc.Material.mix_materials(
+        [waste_material, breeder_material],
+        [waste_volume_percent, breeder_volume_percent],
+        percent_type='vo',
+        name="burner_mixture_fixed_mass"
+    )
+    mixture.depletable = True
+    #mixture.set_density("g/cm3", mixture.density*mass_density_correction_factor)
+
+    return mixture
+
+        
