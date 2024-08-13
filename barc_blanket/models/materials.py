@@ -28,6 +28,30 @@ def flibe(li6_enrichment=None):
     flibe.set_density("g/cm3", 1.94)
     return flibe
 
+def lif_bef(lif_pct, bef_pct):
+    """LiF and BeF2 mixture, based on atom percent. Table 25 of https://www.osti.gov/servlets/purl/5352526
+    """
+
+    lif = openmc.Material(name='lif')
+    lif.depletable = True
+    lif.add_element('Li', 1.0, 'ao')
+    lif.add_element('F', 1.0, 'ao')
+    lif.set_density('g/cm3', 2.64) # https://en.wikipedia.org/wiki/Lithium_fluoride
+
+    bef = openmc.Material(name='bef')
+    bef.depletable = True
+    bef.add_element('Be', 1.0, 'ao')
+    bef.add_element('F', 2.0, 'ao')
+    bef.set_density('g/cm3', 1.99) # https://en.wikipedia.org/wiki/Beryllium_fluoride
+
+    total_pct = lif_pct + bef_pct
+    lif_ao = lif_pct / total_pct
+    bef_ao = bef_pct / total_pct
+
+    lif_bef = openmc.Material.mix_materials([lif, bef], [lif_ao, bef_ao], percent_type='ao', name='lif_bef')
+    lif_bef.depletable = True
+    return lif_bef
+
 # Lithium deuteride
 def lid():
     lid = openmc.Material(name='lid')
@@ -125,24 +149,19 @@ MA_LLNP = ["Np237", "Am241", "Am243", "Cm242", "Cm244", "Tc99", "I129", "Cs135",
 
 def pure_ma_llnp():
     """PWR spent fuel, minus the uranium
-    https://radioactivity.eu.com/articles/radioactive_waste/spent_fuel_composition
+    https://www.cea.fr/english/Documents/scientific-and-economic-publications/nuclear-energy-monographs/CEA_Monograph6_Treatment-recycling-spent-nuclear-fuel_2008_GB.pdf
     """
 
     kg_per_tonne = {
-        #"Pu238": 0.18,
-        #"Pu239": 5.67,
-        #"Pu240": 2.21,
-        #"Pu241": 1.19,
-        #"Pu242": 0.49,
-        "Np237": 0.43,
-        "Am241": 0.22,
-        "Am243": 0.10,
-        "Cm242": 0.000013,
-        "Cm244": 0.024,
-        "Tc99": 0.81,
-        "I129": 0.17,
-        "Cs135": 1.31,
-        "Zr93": 0.71,
+        "Np237": 0.916,
+        "Am241": 0.490,
+        "Am243": 0.294,
+        "Cm244": 0.011,
+        "Se79": 0.008,
+        "Zr93": 1.25,
+        "Tc99": 1.41,
+        "I129": 0.308,
+        "Cs135": 0.769,
     }
 
     total_mass = sum(kg_per_tonne.values())
