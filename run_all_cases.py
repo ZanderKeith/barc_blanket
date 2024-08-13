@@ -2,6 +2,8 @@
 # To be looked at tomorrow morning
 import os
 
+from openmc.data import atomic_mass
+
 from barc_blanket.utilities import working_directory
 from barc_blanket.models.barc_model_final import make_model
 from barc_blanket.materials.blanket_depletion import run_coupled_depletion
@@ -50,6 +52,28 @@ CASES = {
     "pure_ma_llnp_20_pbli": {"blanket_material": burner_mixture(0.20, tank_contents=pure_ma_llnp(), flibe=pbli()),
                                 "name": "MA LLNP 20% PbLi"},
 }
+
+# Debug the absolute mass of the blanket material for each case
+for case, config in CASES.items():
+    print(f"====================")
+    print(f"Case: {case}")
+    blanket_material = config['blanket_material']
+    atom_densities = blanket_material.get_nuclide_atom_densities()
+    atoms = {}
+    masses = {}
+    for nuclide in atom_densities:
+        atoms[nuclide] = atom_densities[nuclide]
+        masses[nuclide] = blanket_material.get_mass_density(nuclide)
+
+    total_atoms = sum(atoms.values())
+    waste_atoms = sum(atoms[nuclide] for nuclide in pure_ma_llnp().get_nuclides())
+    print(f"Waste atom fraction: {waste_atoms / total_atoms}")
+
+    total_mass = sum(masses.values())
+    print(f"Total mass density: {total_mass}\t True mass density: {blanket_material.density}")
+    waste_mass = sum(masses[nuclide] for nuclide in pure_ma_llnp().get_nuclides())
+    print(f"Waste mass density fraction: {waste_mass / total_mass}")
+    print(f"====================")
 
 BATCHES = 30
 PARTICLES = int(1e3)

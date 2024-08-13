@@ -156,13 +156,15 @@ def pure_ma_llnp():
     return pure_ma_llnp
 
 # Mixture of tank contents and flibe for the blanket
-def burner_mixture(slurry_ratio, tank_contents=tank_contents("full_tank_inventory"), flibe=flibe()):
+def burner_mixture(slurry_ratio, percent_type='ao', tank_contents=tank_contents("full_tank_inventory"), flibe=flibe()):
     """Create a mixture of flibe and tank contents for the blanket
     
     Parameters:
     ----------
     slurry_ratio : float
-        The volume percent of slurry in the blanket
+        The 'method' percent of slurry in the blanket
+    percent_type : str, optional
+        The method to use for the mixture. Default is 'vo', can also use 'wo' and 'ao'.
     tank_contents : openmc.Material, optional
         The tank contents to use in the mixture. Default is natural uranium.
     flibe : openmc.Material, optional
@@ -175,12 +177,12 @@ def burner_mixture(slurry_ratio, tank_contents=tank_contents("full_tank_inventor
         The mixture of FLiBe and tank contents
     
     """
-    flibe_vo = 1 - slurry_ratio
+    flibe_ratio = 1 - slurry_ratio
 
     burner_mixture = openmc.Material.mix_materials(
         [flibe, tank_contents],
-        [flibe_vo, slurry_ratio],
-        'vo',
+        [flibe_ratio, slurry_ratio],
+        percent_type=percent_type,
         name="burner_mixture"
     )
     burner_mixture.depletable = True
